@@ -27,7 +27,7 @@ class ReferredPaper(object):
         in key reference. don't have a fixed format
         :return: article_title:str or None
         '''
-
+        # print(referred_paper)
         if "article-title" in referred_paper.keys():
             return referred_paper["article-title"]
         elif "unstructured" in referred_paper.keys():
@@ -38,8 +38,11 @@ class ReferredPaper(object):
                 # book
                 return ReferredPaper.find_article_title_book(referred_paper["unstructured"])
         elif "DOI" in referred_paper.keys():
-            return get_paper_meta_through_doi(referred_paper["DOI"])["message"]["title"][0]
-
+            p =  get_paper_meta_through_doi(referred_paper["DOI"])
+            if p:
+                return get_paper_meta_through_doi(referred_paper["DOI"])["message"]["title"][0]
+            else:
+                return None
         return None
 
     @staticmethod
@@ -49,9 +52,11 @@ class ReferredPaper(object):
         elif ":" in s:
             return s[s.find(":")+1:s.find(".", s.find(":"))]
         else:
-            res = [i for i, v in enumerate(s) if v == ',']
+            comma = [i for i, v in enumerate(s) if v == ',']
             # print(f"article title for book:{s}")
-            return s[res[-3] + 1:res[-2]]
+            if len(comma)>2:
+                return s[comma[-3] + 1:comma[-2]]
+            return s
 
 
 class Paper:
@@ -90,13 +95,22 @@ def get_paper_meta_through_doi(doi: str):
         'User-Agent': 'MashiroCl 1.0',
         'mailto': '441016116@qq.com'  # This is another valid field
     }
-    return requests.get(api + doi,headers=headers).json()
+    result = None
+    response = requests.get(api + doi,headers=headers)
+
+    if 'json' in response.headers.get('content-type') and  response.status_code!=404:
+        # print(response.headers)
+        result = response.json()
+    return result
 
 
 def append_referred_papers(paper: Paper):
     if paper.doi is None:
         return
-    res = get_paper_meta_through_doi(paper.doi)["message"]
+    res = get_paper_meta_through_doi(paper.doi)
+    if res is None:
+        return
+    res = res["message"]
     referred_papers = list()
     if "reference" in res.keys():
         for referred_paper in res["reference"]:
@@ -120,9 +134,9 @@ if __name__ == "__main__":
     t.append(len(papers))
     with open(csv_file, mode="a",  encoding="utf-8") as f:
         writer = csv.writer(f)
-        #178
-        for each in tqdm(papers[178:200]):
+        #300  499?599?
+        for each in tqdm(papers[500:600]):
             append_referred_papers(each)
-            paper2csv(writer, each)
+            # paper2csv(writer, each)
 
 
