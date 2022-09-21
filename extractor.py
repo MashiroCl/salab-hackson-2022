@@ -134,9 +134,10 @@ if __name__ == "__main__":
     t.append(len(papers))
     with open(csv_file, mode="a",  encoding="utf-8") as f:
         writer = csv.writer(f)
-        #300  499?599?
-        for each in tqdm(papers[500:600]):
-            append_referred_papers(each)
-            # paper2csv(writer, each)
+        for i in range(len(t)-1):
+            sleep(3)
+            for each in tqdm(papers[t[i]:t[i+1]]):
+                append_referred_papers(each)
+                paper2csv(writer, each)
 
 
